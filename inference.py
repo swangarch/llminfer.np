@@ -41,7 +41,7 @@ def layer_norm(x: np.array, weight: np.array, bias: np.array, eps: float = 1e-5)
     return norm * weight + bias
 
 
-def pred_next_tk(ids, W, config, temperature=0.8) -> int:
+def pred_next_tk(ids: list, W: np.array, config: dict, temperature: float = 0.8) -> int:
     x = W["wte.weight"][ids] + W["wpe.weight"][np.arange(len(ids))]
     seqlen = x.shape[0]
 
