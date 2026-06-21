@@ -60,8 +60,8 @@ def layer_norm(x: np.array, weight: np.array, bias: np.array, eps: float = 1e-5)
 
 
 def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
-                 prefil: bool = False, temperature: float = 0.8) -> int:
-    if prefil:
+                 prefill: bool = False, temperature: float = 0.8) -> int:
+    if prefill:
         x = W["wte.weight"][ids] + W["wpe.weight"][np.arange(len(ids))]
     else:
         pos = len(ids) - 1
@@ -71,7 +71,7 @@ def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
 
     for i in range(config["n_layer"]):
         x1 = layer_norm(x, W[f"h.{i}.ln_1.weight"], W[f"h.{i}.ln_1.bias"], config["layer_norm_epsilon"])
-        if prefil:
+        if prefill:
             QKV = x1 @ W[f"h.{i}.attn.c_attn.weight"] + W[f"h.{i}.attn.c_attn.bias"]
             Q, K, V = np.split(QKV, 3, axis=-1)
         else:
@@ -81,7 +81,7 @@ def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
             K = np.concatenate([kv_cache[i]["K"],  (x1[-1, :] @ Wk + Bk).reshape(1, -1)], axis=0)
             V = np.concatenate([kv_cache[i]["V"],  (x1[-1, :] @ Wv + Bv).reshape(1, -1)], axis=0)
 
-        if prefil:
+        if prefill:
             kv_cache.append({"K": K, "V": V})
         else:   
             kv_cache[i] = {"K": K, "V": V}
@@ -92,7 +92,7 @@ def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
         attn_heads = []
         for j in range(config["n_head"]):
             score = Q_heads[j] @ K_heads[j].T / (math.sqrt(K_heads[j].shape[1]))
-            if prefil:
+            if prefill:
                 score = score + mask
             attn_head = softmax(score) @ V_heads[j]
             attn_heads.append(attn_head)
@@ -128,8 +128,8 @@ def inference(chat: str, weights: np.array, config: dict, tokens: dict) -> None:
     while len(ids) < config["n_ctx"]:
         if MAX_LEN > 0 and len(ids) > MAX_LEN:
             break
-        prefil = True if len(ids) == init_len else False
-        next_token = pred_next_tk(ids, weights, config, kv_cache, prefil=prefil)
+        prefill = True if len(ids) == init_len else False
+        next_token = pred_next_tk(ids, weights, config, kv_cache, prefill=prefill)
         if next_token == config["eos_token_id"]:
             break
         ids.append(next_token)
