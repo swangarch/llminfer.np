@@ -2,8 +2,8 @@
 
 A minimal LLM inference engine written from scratch in pure Python and NumPy.
 
-Currently supports **GPT-2** families model (from 124M to 1.5B). No PyTorch, no ML framework, every step from
-embeddings, attention, MLP, sampling is implemented by hand.
+Currently supports **GPT-2** families model (from 124M to 1.5B). Without PyTorch, ML framework, every step from
+embeddings, attention, MLP, sampling，and KV cache is implemented by hand.
 
 ## Goal
 
@@ -15,6 +15,8 @@ architectures.
 
 - Pure NumPy forward pass — no deep learning framework
 - Loads official weights via `safetensors`
+- Adapt variety of GPT-2 family model structure with official configuration file
+- KV cache for acceleration of model inference
 - Full GPT-2 transformer block: pre-norm, multi-head causal self-attention, GELU MLP
 - Temperature sampling with EOS stopping
 - Streaming token-by-token output
@@ -41,19 +43,57 @@ bash download_model.sh
 
 ### Usage
 ```bash
+# Inference without KV cache
 python inference.py
+
+# Inference with KV cache
+python inference_KV.py
 ```
 
-Edit the prompt in main():
+### Example
+```
+The following is a conversation between a User and a helpful Assistant.
 
-chat = "Hello, my name is tom"
+    User: What is the capital of France?
+    Assistant: The capital of France is Paris.
 
-How it works
+    User: Tell me more about France.
+    Assistant: The capital of France is Paris.
 
-text
+
+User: I'm using it to register a new account. Do you want to invite me to your account?
+
+Assistant: You don't have to invite me to the account, but you do have to do something that you normally would not do with someone else. I'll be at the account.
+
+
+User: Is your account private?
+
+Assistant: If you're using my name and password, or your (...)
+```
+
+To change prompt, use -c
+
+```bash
+python inference.py -c "Hello, my name is tom"
+```
+
+### KV cache accelaration
+
+For 150 tokens generation:
+
+- **python inference_KV.py** 
+   - 95.20s user 59.38s system 933% cpu 16.561 total 
+- **python inference.py**  
+   - 356.33s user 78.85s system 952% cpu 45.688 total
+
+
+
+## How it works
+
+input text
 - → BPE tokenizer            (tokenizers)
 - → token + position embeddings
-- → 12 × transformer block
+- → n × transformer block
         ln_1 → multi-head attention → residual
         ln_2 → MLP (GELU)           → residual
 - → final layer norm
@@ -64,7 +104,7 @@ text
 
 Roadmap
 
-- [ ] KV cache (avoid recomputing the full sequence each step)
+- [ x ] KV cache (avoid recomputing the full sequence each step)
 - [ ] Add GPU support
 - [ ] top-k / top-p sampling
 - [ ] Support more architectures (RoPE, LLaMA / Qwen)
@@ -74,6 +114,23 @@ Roadmap
 
 GPT-2 is a base model (no chat/instruction fine-tuning) — it continues text rather than answering.
 Repetition with greedy decoding is expected; use temperature sampling for variety.
+
+
+## Acknowledgments & References
+
+  This project is a learning exercise, inspired by and indebted to:
+
+  - **Andrej Karpathy** — for making transformers approachable to everyone:
+    - [nanoGPT](https://github.com/karpathy/nanoGPT) — minimal GPT training/inference in PyTorch
+    - [minGPT](https://github.com/karpathy/minGPT) — the earlier minimal GPT
+    - ["Let's reproduce GPT-2"](https://www.youtube.com/watch?v=l8pRSuU81PU)
+  - **Jay Mody** — [picoGPT](https://github.com/jaymody/picoGPT), GPT-2 forward pass in ~60 lines of
+  NumPy
+  - **OpenAI** — [GPT-2](https://github.com/openai/gpt-2) and the
+    [original paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_mu
+  ltitask_learners.pdf)
+  - **Hugging Face** — model weights (`openai-community/gpt2`), `safetensors`, and `tokenizers`
+
 
 # License
 
