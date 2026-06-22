@@ -1,7 +1,12 @@
-numpy==1.26.4
+numpy>=2.0
 
 safetensors
 
 tokenizers
 
 huggingface_hub
+
+pytest
+
+# Add this if CUDA is supported
+# cupy-cuda12x[ctk]
