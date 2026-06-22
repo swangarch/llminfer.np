@@ -3,7 +3,7 @@
 A minimal LLM inference engine written from scratch in pure Python and NumPy.
 
 Currently supports **GPT-2** families model (from 124M to 1.5B). Without PyTorch, ML framework, every step from
-embeddings, attention, MLP, sampling，and KV cache is implemented by hand.
+embeddings, attention, MLP, sampling，and KV cache is implemented by hand. The engine support CPU acceleration using Cupy.
 
 ## Goal
 
@@ -11,9 +11,15 @@ To understand LLM inference end-to-end by building it. The goal
 is to keep the code small and readable, then incrementally grow it toward supporting more model
 architectures.
 
-## Features
+This repository contains 2 implementations:
+  - **inference.py** - The minimalist runable version, implement basic GPT-2 transformer decoder, the code is more readable.
 
-- Pure NumPy forward pass — no deep learning framework
+  - **inference_acceleration.py** - The version supporting CUDA and  KV cache, allowing faster inference speed.
+
+Two versions are for different purpose.
+
+## Features
+- Pure NumPy / Cupy forward pass, with only matrix operation — no deep learning framework
 - Loads official weights via `safetensors`
 - Adapt variety of GPT-2 family model structure with official configuration file
 - KV cache for acceleration of model inference
@@ -23,17 +29,26 @@ architectures.
 
 ## Usage
 
+### Environment
+
+This project requires Linux with CUDA 12.X
+
+MACOS is also supported without GPU acceleration, remove CUPY in requirements.txt to avoid error messages
+
 ### Setup & model preparation
 
 ```bash
 # Set up virtual environment
 bash venv.sh
 
+# Enter virtual environment
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
-# Enter virtual environment
-source venv/bin/activate
+# Install Cupy if cuda is supported, else skip this
+pip install cupy-cuda12x[ctk]
 
 # Download the GPT-2 weights and config into a model/ folder
 bash download_model.sh
@@ -47,7 +62,13 @@ bash download_model.sh
 python inference.py
 
 # Inference with KV cache
-python inference_KV.py
+python inference_acceleration.py -kv
+
+# Inference with CUDA
+python inference_acceleration.py -kv
+
+# Inference with KV cache and CUDA
+python inference_acceleration.py -kv -cu
 ```
 
 ### Example
@@ -77,22 +98,28 @@ To change prompt, use -c
 python inference.py -c "Hello, my name is tom"
 ```
 
-### KV cache accelaration
+### Accelaration
 
-For 150 tokens generation:
+For 150 total tokens:
 
-- **python inference_KV.py** 
-   - 95.20s user 59.38s system 933% cpu 16.561 total 
-- **python inference.py**  
-   - 356.33s user 78.85s system 952% cpu 45.688 total
+#### Without acceleration
+- [CPU with no acceleration]
+  - **python inference_acceleration.py** 1073.20s user 17.07s system 1313% cpu 1:23.02 total
+- [KV cache] 
+  - **python inference_acceleration.py -kv**  426.58s user 4.88s system 839% cpu 51.372 total
+- [CUDA]
+  - **python inference_acceleration.py -cu**  15.17s user 2.20s system 104% cpu 16.672 total
+- [KV cache + CUDA]
+  - **python inference_acceleration.py -kv -cu**  6.22s user 1.08s system 120% cpu 6.049 total
+
+As we can observe, GPU acceleration increase 70 times of inference speed than CPU, KV cache increase 1.5 times.
 
 
-
-## How it works
+## GPT-2 architecture
 
 input text
 - → BPE tokenizer            (tokenizers)
-- → token + position embeddings
+- → token embedding + position embedding
 - → n × transformer block
         ln_1 → multi-head attention → residual
         ln_2 → MLP (GELU)           → residual
@@ -102,10 +129,10 @@ input text
 - → decode → next token
 - → loop
 
-Roadmap
+## Future roadmap
 
 - [ x ] KV cache (avoid recomputing the full sequence each step)
-- [ ] Add GPU support
+- [ x ] Add GPU support
 - [ ] top-k / top-p sampling
 - [ ] Support more architectures (RoPE, LLaMA / Qwen)
 - [ ] Hand-written BPE tokenizer
