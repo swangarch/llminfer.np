@@ -65,7 +65,7 @@ python inference.py
 python inference_acceleration.py -kv
 
 # Inference with CUDA
-python inference_acceleration.py -kv
+python inference_acceleration.py -cu
 
 # Inference with KV cache and CUDA
 python inference_acceleration.py -kv -cu
