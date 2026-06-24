@@ -102,6 +102,10 @@ python inference.py -c "Hello, my name is tom"
 
 For 150 total tokens:
 
+Device 
+CPU  i7 13650HX
+GPU  RTX 4060
+
 #### Without acceleration
 - [CPU with no acceleration]
   - **python inference_acceleration.py** 1073.20s user 17.07s system 1313% cpu 1:23.02 total
@@ -112,7 +116,7 @@ For 150 total tokens:
 - [KV cache + CUDA]
   - **python inference_acceleration.py -kv -cu**  6.22s user 1.08s system 120% cpu 6.049 total
 
-As we can observe, GPU acceleration increase 70 times of inference speed than CPU, KV cache increase 1.5 times.
+As we can observe, GPU acceleration increase 5 times of inference speed than CPU, KV cache increase 1.6 times.
 
 
 ## GPT-2 architecture
