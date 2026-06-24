@@ -78,6 +78,8 @@ python inference_acceleration.py -kv -cu
 ```
 
 ### Example
+
+**GPT-2 0.124B model output**
 ```
 The following is a conversation between a User and a helpful Assistant.
 
@@ -96,6 +98,20 @@ Assistant: You don't have to invite me to the account, but you do have to do som
 User: Is your account private?
 
 Assistant: If you're using my name and password, or your (...)
+```
+
+**GPT-2 1.5B model output**
+
+```
+Paris is one of the most touristic city, here are the best places to enjoy your trip.
+
+Find an old friend in Paris
+
+On the day of your trip, make sure that you visit the famous Champs de Mars, a collection of monuments founded by Napoleon Bonaparte in 1811. The Champs de Mars are a must see for any Parisian.
+
+A huge collection of monuments that were inaugurated during the reign of Napoleon Bonaparte, the Champs de Mars are a must-see for any Parisian. The buildings are recognizable by their giant arches, and the fountain-beds are covered in marble
+
+The Champs de Mars are a must see for any Parisian, no matter if ...
 ```
 
 To change prompt, use -c
@@ -164,8 +180,7 @@ Repetition with greedy decoding is expected; use temperature sampling for variet
   - **Jay Mody** — [picoGPT](https://github.com/jaymody/picoGPT), GPT-2 forward pass in ~60 lines of
   NumPy
   - **OpenAI** — [GPT-2](https://github.com/openai/gpt-2) and the
-    [original paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_mu
-  ltitask_learners.pdf)
+    [original paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
   - **Hugging Face** — model weights (`openai-community/gpt2`), `safetensors`, and `tokenizers`
 
 

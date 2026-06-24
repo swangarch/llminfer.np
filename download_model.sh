@@ -11,7 +11,7 @@ set -e
 
 FILES="model.safetensors config.json tokenizer.json"
 
-# --- gpt2 (124M) -------------------------------------------------------------
+# # --- gpt2 (124M) -------------------------------------------------------------
 hf download openai-community/gpt2 $FILES --local-dir ./model
 
 # --- gpt2-medium (355M) ------------------------------------------------------
