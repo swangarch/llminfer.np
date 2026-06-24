@@ -11,13 +11,8 @@ np.random.seed(422)
 
 
 def parse_json(path: str) -> dict:
-    try:
-        with open(path, mode="r", encoding="UTF-8") as f:
-            content = json.load(f)
-            return content
-    except Exception as e:
-        print("Error:", e)
-        return None
+    with open(path, mode="r", encoding="UTF-8") as f:
+        return json.load(f)
 
 
 def softmax(value: np.array) -> np.array:
@@ -83,10 +78,10 @@ def pred_next_tk(ids: list, W: np.array, config: dict, temperature: float = 0.8)
     return next_id
 
 
-def inference(chat: str, weights: np.array, config: dict, tokens: dict) -> None:
-    print(chat, end="", flush=True)
+def inference(context: str, weights: np.array, config: dict, tokens: dict) -> None:
+    print(context, end="", flush=True)
     
-    ids = tokens.encode(chat).ids
+    ids = tokens.encode(context).ids
 
     while len(ids) < config["n_ctx"]:
         if MAX_LEN > 0 and len(ids) > MAX_LEN:
@@ -106,7 +101,7 @@ def parse_args():
     parser.add_argument("-t", "--tokenizer", type=str, default="model/tokenizer.json")
     parser.add_argument("-w", "--weights", type=str, default="model/model.safetensors")
     parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
-
+                        
     User: What is the capital of France?
     Assistant: The capital of France is Paris.
 

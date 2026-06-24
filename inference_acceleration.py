@@ -6,10 +6,6 @@ import math
 import argparse
 
 
-MAX_LEN = 150
-RD_SEED = 422
-
-
 def parse_args(argv = None):
     parser = argparse.ArgumentParser()
 
@@ -18,6 +14,8 @@ def parse_args(argv = None):
     parser.add_argument("-w", "--weights", type=str, default="model/model.safetensors")
     parser.add_argument("-cu", "--cuda", action="store_true")
     parser.add_argument("-kv", "--kv_cache", action="store_true")
+    parser.add_argument("-s", "--seed", type=int, default=422)
+    parser.add_argument("-ml", "--max_len", type=int, default=150)
     parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
 
     User: What is the capital of France?
@@ -31,13 +29,8 @@ def parse_args(argv = None):
 
 
 def parse_json(path: str) -> dict:
-    try:
-        with open(path, mode="r", encoding="UTF-8") as f:
-            content = json.load(f)
-            return content
-    except Exception as e:
-        print("\033[31mError:", e, "\033[0m")
-        return None
+    with open(path, mode="r", encoding="UTF-8") as f:
+        return json.load(f)
 
 
 def softmax(value: np.array) -> np.array:
@@ -81,8 +74,8 @@ def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
             Wq, Wk, Wv = np.split(W[f"h.{i}.attn.c_attn.weight"], 3, axis=-1)
             Bq, Bk, Bv = np.split(W[f"h.{i}.attn.c_attn.bias"], 3, axis=-1)
             Q = x1 @ Wq + Bq
-            K = np.concatenate([kv_cache[i]["K"],  (x1[-1, :] @ Wk + Bk).reshape(1, -1)], axis=0)
-            V = np.concatenate([kv_cache[i]["V"],  (x1[-1, :] @ Wv + Bv).reshape(1, -1)], axis=0)
+            K = np.concatenate([kv_cache[i]["K"], (x1[-1, :] @ Wk + Bk).reshape(1, -1)], axis=0)
+            V = np.concatenate([kv_cache[i]["V"], (x1[-1, :] @ Wv + Bv).reshape(1, -1)], axis=0)
 
         if not kv_cache_enabled or prefill:
             kv_cache.append({"K": K, "V": V})
@@ -121,17 +114,17 @@ def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
     return int(next_id)
 
 
-def inference(chat: str, weights: np.array, config: dict, tokens: dict,
-              kv_cache_enabled: bool = False) -> None:
-    print(chat, end="", flush=True)
+def inference(context: str, weights: np.array, config: dict, tokens: dict,
+              kv_cache_enabled: bool = False, max_len: int = 150) -> None:
+    print(context, end="", flush=True)
     
-    ids = tokens.encode(chat).ids
+    ids = tokens.encode(context).ids
     init_len = len(ids)
     kv_cache = []
-    out_text = chat
+    out_text = context
 
     while len(ids) < config["n_ctx"]:
-        if MAX_LEN > 0 and len(ids) > MAX_LEN:
+        if max_len > 0 and len(ids) > max_len:
             break
         prefill = True if len(ids) == init_len else False
         next_token = pred_next_tk(ids, weights, config, kv_cache, prefill=prefill,
@@ -167,9 +160,10 @@ def main(argv = None):
     weights = load_file(args.weights)
 
     use_cuda(weights, args.cuda)
-    np.random.seed(RD_SEED)
+    np.random.seed(args.seed)
     
-    return inference(args.context, weights, config, tokens, args.kv_cache)
+    return inference(args.context, weights, config, tokens,
+                     args.kv_cache, args.max_len)
 
 
 if __name__ == "__main__":

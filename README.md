@@ -3,7 +3,7 @@
 A minimal LLM inference engine written from scratch in pure Python and NumPy.
 
 Currently supports **GPT-2** families model (from 124M to 1.5B). Without PyTorch, ML framework, every step from
-embeddings, attention, MLP, sampling，and KV cache is implemented by hand. The engine support CPU acceleration using Cupy.
+embeddings, attention, MLP, sampling，and KV cache is implemented by hand. The engine support GPU acceleration using Cupy.
 
 ## Goal
 
@@ -37,19 +37,25 @@ MACOS is also supported without GPU acceleration, remove CUPY in requirements.tx
 
 ### Setup & model preparation
 
+For CPU only and MAC
 ```bash
-# Set up virtual environment
+# Set up virtual environment for CPU
 bash venv.sh
 
 # Enter virtual environment
 source venv/bin/activate
+```
 
-# Install dependencies
-pip install -r requirements.txt
+For CUDA
+```bash
+# Set up virtual environment for CPU
+bash venv_cuda.sh
 
-# Install Cupy if cuda is supported, else skip this
-pip install cupy-cuda12x[ctk]
+# Enter virtual environment
+source venv/bin/activate
+```
 
+```bash
 # Download the GPT-2 weights and config into a model/ folder
 bash download_model.sh
 
