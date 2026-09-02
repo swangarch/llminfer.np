@@ -1,4 +1,4 @@
-from inference_acceleration import main
+from single_file.inference_acceleration import main
 
 
 def test_without_acceleration():

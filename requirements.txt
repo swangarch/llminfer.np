@@ -1,5 +1,7 @@
 numpy>=2.0
 
+torch
+
 safetensors
 
 tokenizers
@@ -7,6 +9,8 @@ tokenizers
 huggingface_hub
 
 pytest
+
+ruff
 
 # Add this if CUDA is supported
 # cupy-cuda12x[ctk]
