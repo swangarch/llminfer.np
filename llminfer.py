@@ -2,7 +2,7 @@ import numpy as np
 from safetensors.numpy import load_file
 from tokenizers import Tokenizer
 import argparse
-from llminfer import infer_qwen, parse_json
+from llminfer import ModelRegistry, parse_json
 
 
 MAX_LEN = 150
@@ -13,11 +13,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # Add a option to show model structure
 
-    model = "qwen2.5"
-
-    parser.add_argument("-mc", "--model_config", type=str, default=f"model/{model}/config.json")
-    parser.add_argument("-t", "--tokenizer", type=str, default=f"model/{model}/tokenizer.json")
-    parser.add_argument("-w", "--weights", type=str, default=f"model/{model}/model_fp32.safetensors")
+    parser.add_argument("-m", "--model", type=str, default=f"qwen2.5")
     parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
        
     User: What is the capital of France?
@@ -33,11 +29,15 @@ def parse_args():
 def main():
     args = parse_args()
 
-    config = parse_json(args.model_config)
-    tokens = Tokenizer.from_file(args.tokenizer)
-    weights = load_file(args.weights)
+    config_path = f"model/{args.model}/config.json"
+    tokenizer_path = f"model/{args.model}/tokenizer.json"
+    weights_path = f"model/{args.model}/model.safetensors"
+
+    config = parse_json(config_path)
+    tokens = Tokenizer.from_file(tokenizer_path)
+    weights = load_file(weights_path)
     
-    infer_qwen(args.context, weights, config, tokens)
+    ModelRegistry.get_model(args.model).inference(args.context, weights, config, tokens)
 
 
 if __name__ == "__main__":

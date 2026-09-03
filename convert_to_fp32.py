@@ -3,7 +3,7 @@ from safetensors.torch import load_file, save_file
 
 
 src = Path("model/qwen2.5/model.safetensors")
-dst = Path("model/qwen2.5/model_fp32.safetensors")
+dst = Path("model/qwen2.5/model.safetensors")
 
 print("Start to convert weight to fp32.")
 

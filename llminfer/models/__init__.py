@@ -1,8 +1,6 @@
-from .gpt2 import infer_gpt2
-from .qwen import infer_qwen
+from .ModelRegistry import ModelRegistry
+from .GPT2 import GPT2
+from .Qwen import Qwen
 
 
-__all__ = [
-    "infer_gpt2",
-    "infer_qwen"
-]
+__all__ = ["ModelRegistry"]

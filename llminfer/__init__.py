@@ -1,10 +1,8 @@
-from .models import infer_gpt2
-from .models import infer_qwen
+from .models import ModelRegistry
 from .parser import parse_json
 
 
 __all__ = [
-    "infer_gpt2",
-    "infer_qwen",
+    "ModelRegistry",
     "parse_json"
 ]

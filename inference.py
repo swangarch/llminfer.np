@@ -1,13 +1,31 @@
-import numpy as np
 import json
 from safetensors.numpy import load_file
+import numpy as np
 from tokenizers import Tokenizer
 import math
 import argparse
 
 
-MAX_LEN = 150
-np.random.seed(422)
+def parse_args(argv = None):
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-mc", "--model_config", type=str, default="model/gpt2/config.json")
+    parser.add_argument("-t", "--tokenizer", type=str, default="model/gpt2/tokenizer.json")
+    parser.add_argument("-w", "--weights", type=str, default="model/gpt2/model.safetensors")
+    parser.add_argument("-cu", "--cuda", action="store_true")
+    parser.add_argument("-kv", "--kv_cache", action="store_true")
+    parser.add_argument("-s", "--seed", type=int, default=422)
+    parser.add_argument("-ml", "--max_len", type=int, default=150)
+    parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
+
+    User: What is the capital of France?
+    Assistant: The capital of France is Paris.
+
+    User: Tell me more about France.
+    Assistant:""")
+
+    args = parser.parse_args(argv)
+    return args
 
 
 def parse_json(path: str) -> dict:
@@ -36,24 +54,42 @@ def layer_norm(x: np.array, weight: np.array, bias: np.array, eps: float = 1e-5)
     return norm * weight + bias
 
 
-def pred_next_tk(ids: list, W: np.array, config: dict, temperature: float = 0.8) -> int:
-    x = W["wte.weight"][ids] + W["wpe.weight"][np.arange(len(ids))]
+def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
+                 prefill: bool = False, kv_cache_enabled: bool = False,
+                 temperature: float = 0.8) -> int:
+    if not kv_cache_enabled or prefill:
+        x = W["wte.weight"][ids] + W["wpe.weight"][np.arange(len(ids))]
+    else:
+        pos = len(ids) - 1
+        x = W["wte.weight"][[ids[-1]]] + W["wpe.weight"][[pos]]
     seqlen = x.shape[0]
-
     mask = np.triu(np.full((seqlen, seqlen), -np.inf), k=1)
 
     for i in range(config["n_layer"]):
         x1 = layer_norm(x, W[f"h.{i}.ln_1.weight"], W[f"h.{i}.ln_1.bias"], config["layer_norm_epsilon"])
-        QKV = x1 @ W[f"h.{i}.attn.c_attn.weight"] + W[f"h.{i}.attn.c_attn.bias"] 
-        Q, K, V = np.split(QKV, 3, axis=-1)
-        Q_heads = np.split(Q, config["n_head"], axis=1)
-        K_heads = np.split(K, config["n_head"], axis=1)
-        V_heads = np.split(V, config["n_head"], axis=1)
+        if not kv_cache_enabled or prefill:
+            QKV = x1 @ W[f"h.{i}.attn.c_attn.weight"] + W[f"h.{i}.attn.c_attn.bias"]
+            Q, K, V = np.split(QKV, 3, axis=-1)
+        else:
+            Wq, Wk, Wv = np.split(W[f"h.{i}.attn.c_attn.weight"], 3, axis=-1)
+            Bq, Bk, Bv = np.split(W[f"h.{i}.attn.c_attn.bias"], 3, axis=-1)
+            Q = x1 @ Wq + Bq
+            K = np.concatenate([kv_cache[i]["K"], (x1[-1, :] @ Wk + Bk).reshape(1, -1)], axis=0)
+            V = np.concatenate([kv_cache[i]["V"], (x1[-1, :] @ Wv + Bv).reshape(1, -1)], axis=0)
+
+        if not kv_cache_enabled or prefill:
+            kv_cache.append({"K": K, "V": V})
+        else:   
+            kv_cache[i] = {"K": K, "V": V}
+        Q_heads = np.split(Q, config["n_head"], axis=-1)
+        K_heads = np.split(K, config["n_head"], axis=-1)
+        V_heads = np.split(V, config["n_head"], axis=-1)
 
         attn_heads = []
         for j in range(config["n_head"]):
             score = Q_heads[j] @ K_heads[j].T / (math.sqrt(K_heads[j].shape[1]))
-            score = score + mask
+            if not kv_cache_enabled or prefill:
+                score = score + mask
             attn_head = softmax(score) @ V_heads[j]
             attn_heads.append(attn_head)
         
@@ -74,52 +110,60 @@ def pred_next_tk(ids: list, W: np.array, config: dict, temperature: float = 0.8)
     logits = logits / temperature
     probs = softmax(logits)
 
-    next_id = np.random.choice(len(probs), p=probs)
-    return next_id
+    next_id = np.random.choice(len(probs), size=1, p=probs)[0]
+    return int(next_id)
 
 
-def inference(context: str, weights: np.array, config: dict, tokens: dict) -> None:
+def inference(context: str, weights: np.array, config: dict, tokens: dict,
+              kv_cache_enabled: bool = False, max_len: int = 150) -> None:
     print(context, end="", flush=True)
     
     ids = tokens.encode(context).ids
+    init_len = len(ids)
+    kv_cache = []
+    out_text = context
 
     while len(ids) < config["n_ctx"]:
-        if MAX_LEN > 0 and len(ids) > MAX_LEN:
+        if max_len > 0 and len(ids) > max_len:
             break
-        next_token = pred_next_tk(ids, weights, config)
+        prefill = True if len(ids) == init_len else False
+        next_token = pred_next_tk(ids, weights, config, kv_cache, prefill=prefill,
+                                  kv_cache_enabled=kv_cache_enabled)
         if next_token == config["eos_token_id"]:
             break
         ids.append(next_token)
         text = tokens.decode([next_token])
         print(text, end="", flush=True)
+        out_text += text
+    return out_text
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-mc", "--model_config", type=str, default="model/config.json")
-    parser.add_argument("-t", "--tokenizer", type=str, default="model/tokenizer.json")
-    parser.add_argument("-w", "--weights", type=str, default="model/model.safetensors")
-    parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
-                        
-    User: What is the capital of France?
-    Assistant: The capital of France is Paris.
-
-    User: Tell me more about France.
-    Assistant:""")
-
-    args = parser.parse_args()
-    return args
+def use_cuda(weights: dict, cuda: bool = False):
+    if cuda == True:
+        global np
+        try:
+            import cupy as np
+            for k, v in weights.items():
+                weights[k] = np.array(v)
+            print("\033[32mUsing GPU CUDA accelaration.\033[0m")
+        except ImportError:
+            print("\033[32mFailed to import Cupy, using Numpy on CPU.\033[0m")
+    else:
+        print("\033[32mUsing CPU.\033[0m")
 
 
-def main():
-    args = parse_args()
+def main(argv = None):
+    args = parse_args(argv)
 
     config = parse_json(args.model_config)
     tokens = Tokenizer.from_file(args.tokenizer)
     weights = load_file(args.weights)
+
+    use_cuda(weights, args.cuda)
+    np.random.seed(args.seed)
     
-    inference(args.context, weights, config, tokens)
+    return inference(args.context, weights, config, tokens,
+                     args.kv_cache, args.max_len)
 
 
 if __name__ == "__main__":
