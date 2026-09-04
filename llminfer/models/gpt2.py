@@ -1,4 +1,3 @@
-
 import numpy as np
 import math
 from .BaseModel import BaseModel
@@ -15,7 +14,7 @@ class GPT2(BaseModel):
         return cls.name
 
     @staticmethod
-    def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list = [],
+    def pred_next_token(ids: list, W: np.array, config: dict, kv_cache: list = [],
                     prefill: bool = False, kv_cache_enabled: bool = False,
                     temperature: float = 0.8) -> int:
         if not kv_cache_enabled or prefill:
@@ -88,7 +87,7 @@ class GPT2(BaseModel):
             if max_len > 0 and len(ids) > max_len:
                 break
             prefill = True if len(ids) == init_len else False
-            next_token = GPT2.pred_next_tk(ids, weights, config, kv_cache, prefill=prefill,
+            next_token = GPT2.pred_next_token(ids, weights, config, kv_cache, prefill=prefill,
                                     kv_cache_enabled=kv_cache_enabled)
             if next_token == config["eos_token_id"]:
                 break

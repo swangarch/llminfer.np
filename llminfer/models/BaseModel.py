@@ -12,7 +12,7 @@ class BaseModel(ABC):
 
     @staticmethod
     @abstractmethod
-    def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list = [],
+    def pred_next_token(ids: list, W: np.array, config: dict, kv_cache: list = [],
                     prefill: bool = False, kv_cache_enabled: bool = False,
                     temperature: float = 0.8) -> int:
         raise NotImplementedError

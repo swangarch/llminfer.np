@@ -1,21 +1,20 @@
 import numpy as np
+import os
 from safetensors.numpy import load_file
 from tokenizers import Tokenizer
 import argparse
 from llminfer import ModelRegistry, parse_json
 
 
-MAX_LEN = 150
-np.random.seed(422)
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
-    # Add a option to show model structure
-
+    parser.add_argument("-cu", "--cuda", action="store_true")
+    parser.add_argument("-kv", "--kv_cache", action="store_true")
+    parser.add_argument("-s", "--seed", type=int, default=422)
+    parser.add_argument("-ml", "--max_len", type=int, default=150)
     parser.add_argument("-m", "--model", type=str, default=f"qwen2.5")
     parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
-       
+
     User: What is the capital of France?
     Assistant: The capital of France is Paris.
 
@@ -26,8 +25,34 @@ def parse_args():
     return args
 
 
+def check_model_downloaded(model: str) -> bool:
+    if not os.path.exists(f"model/{model}"):
+        print(f"Model {model} not exist, download model first.")
+        return False
+    return True
+
+
+def use_cuda(weights: dict, cuda: bool = False) -> str:
+    if cuda == True:
+        global np
+        try:
+            import cupy as np
+            for k, v in weights.items():
+                weights[k] = np.array(v)
+            print("Using GPU CUDA accelaration.")
+            return "gpu"
+        except ImportError:
+            print("Failed to import Cupy, using Numpy on CPU.")
+    else:
+        print("Using CPU.")
+    return "cpu"
+
+
 def main():
     args = parse_args()
+
+    if not check_model_downloaded(args.model):
+        return
 
     config_path = f"model/{args.model}/config.json"
     tokenizer_path = f"model/{args.model}/tokenizer.json"
@@ -36,8 +61,17 @@ def main():
     config = parse_json(config_path)
     tokens = Tokenizer.from_file(tokenizer_path)
     weights = load_file(weights_path)
+
+    print("=" * 40)
+    print(f"Model -- {args.model}")
+    device = use_cuda(weights, args.cuda)
+    print("KV cache enabled." if args.kv_cache else "KV cache disabled.")
+    print("=" * 40)
+    print()
+    np.random.seed(args.seed)
     
-    ModelRegistry.get_model(args.model).inference(args.context, weights, config, tokens)
+    ModelRegistry.get_model(args.model).inference(args.context, weights, config, tokens,
+                     args.kv_cache, args.max_len)
 
 
 if __name__ == "__main__":

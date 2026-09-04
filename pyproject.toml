@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A llm inference engine from scratch with Numpy"
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
     "huggingface-hub>=1.29.0",
     "numpy>=2.0",
@@ -13,3 +14,6 @@ dependencies = [
     "tokenizers>=0.23.1",
     "torch>=2.14.0",
 ]
+
+[project.optional-dependencies]
+cuda = [ "cupy-cuda12x[ctk]; sys_platform == 'linux'", ]

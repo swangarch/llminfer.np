@@ -23,10 +23,9 @@ hf download openai-community/gpt2 $FILES --local-dir ./model/gpt2
 # --- gpt2-xl (1.5B) ----------------------------------------------------------
 # hf download openai-community/gpt2-xl $FILES --local-dir ./model/gpt2
 
-
 # # --- Qwen 2.5 -------------------------------------------------------------
 hf download Qwen/Qwen2.5-0.5B-Instruct --local-dir ./model/qwen2.5
-
+uv run python convert_to_fp32.py
 
 
 echo "Model has been downloaded."

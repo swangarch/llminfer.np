@@ -14,7 +14,7 @@ class Qwen(BaseModel):
         return cls.name
 
     @staticmethod
-    def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list = [],
+    def pred_next_token(ids: list, W: np.array, config: dict, kv_cache: list = [],
                     prefill: bool = False, kv_cache_enabled: bool = False,
                     temperature: float = 0.8) -> int:
         x = W["model.embed_tokens.weight"][ids]
@@ -80,7 +80,7 @@ class Qwen(BaseModel):
         while len(ids) < max_len:
             if max_len > 0 and len(ids) > max_len:
                 break
-            next_token = Qwen.pred_next_tk(ids, weights, config)
+            next_token = Qwen.pred_next_token(ids, weights, config)
             if next_token == config["eos_token_id"]:
                 break
             ids.append(next_token)
