@@ -21,11 +21,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Setup virtual environmet and install requirements
-        run: pip install -r requirements.txt
+      - name: Setup virtual environmet
+        run: |
+          pip install uv
+          uv sync
 
       - name: Download model weights and configuration
         run: bash download_model.sh
 
       - name: Run inference tests
-        run: pytest
+        run: uv run pytest
