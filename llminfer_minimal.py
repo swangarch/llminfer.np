@@ -9,9 +9,9 @@ import argparse
 def parse_args(argv = None):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-mc", "--model_config", type=str, default="model/config.json")
-    parser.add_argument("-t", "--tokenizer", type=str, default="model/tokenizer.json")
-    parser.add_argument("-w", "--weights", type=str, default="model/model.safetensors")
+    parser.add_argument("-mc", "--model_config", type=str, default="model/gpt2/config.json")
+    parser.add_argument("-t", "--tokenizer", type=str, default="model/gpt2/tokenizer.json")
+    parser.add_argument("-w", "--weights", type=str, default="model/gpt2/model.safetensors")
     parser.add_argument("-cu", "--cuda", action="store_true")
     parser.add_argument("-kv", "--kv_cache", action="store_true")
     parser.add_argument("-s", "--seed", type=int, default=422)
@@ -54,7 +54,7 @@ def layer_norm(x: np.array, weight: np.array, bias: np.array, eps: float = 1e-5)
     return norm * weight + bias
 
 
-def pred_next_tk(ids: list, W: np.array, config: dict, kv_cache: list,
+def pred_next_token(ids: list, W: np.array, config: dict, kv_cache: list,
                  prefill: bool = False, kv_cache_enabled: bool = False,
                  temperature: float = 0.8) -> int:
     if not kv_cache_enabled or prefill:
@@ -127,7 +127,7 @@ def inference(context: str, weights: np.array, config: dict, tokens: dict,
         if max_len > 0 and len(ids) > max_len:
             break
         prefill = True if len(ids) == init_len else False
-        next_token = pred_next_tk(ids, weights, config, kv_cache, prefill=prefill,
+        next_token = pred_next_token(ids, weights, config, kv_cache, prefill=prefill,
                                   kv_cache_enabled=kv_cache_enabled)
         if next_token == config["eos_token_id"]:
             break
