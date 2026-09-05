@@ -2,13 +2,11 @@
 
 A minimal LLM inference engine written from scratch in pure Python and NumPy.
 
-Currently supports **GPT-2** and **Qwen2.5** families model. Inference without ML framework, every step from
-embeddings, attention, MLP, sampling，and KV cache is implemented by hand. The engine support GPU acceleration using Cupy.
+Currently supports **GPT-2** and **Qwen2.5** families model. Inference without ML framework, every step from embeddings, multi head attention, MLP, sampling，and KV cache is implemented by hand. The engine support GPU acceleration using Cupy.
 
 ## Goal
 
-The goal is to keep the code small and readable, then incrementally grow it toward supporting more model
-architectures.
+The goal is to keep the code small and readable, then incrementally grow it toward supporting more model architectures.
 
 This repository contains 2 implementations:
   - **llminfer_minimal.py** - The minimalist runable version, implement basic GPT-2 transformer decoder, the code is more readable, supporting CUDA and KV cache, allowing faster inference speed..
@@ -67,27 +65,65 @@ uv run llminfer.py -cu
 uv run llminfer.py -kv -cu
 ```
 
-### Example
+For models support chat, multi turn chat mode can be activated.
 
-**GPT-2 1.5B model output**
-
-```
-Paris is one of the most touristic city, here are the best places to enjoy your trip.
-
-Find an old friend in Paris
-
-On the day of your trip, make sure that you visit the famous Champs de Mars, a collection of monuments founded by Napoleon Bonaparte in 1811. The Champs de Mars are a must see for any Parisian.
-
-A huge collection of monuments that were inaugurated during the reign of Napoleon Bonaparte, the Champs de Mars are a must-see for any Parisian. The buildings are recognizable by their giant arches, and the fountain-beds are covered in marble
-
-The Champs de Mars are a must see for any Parisian, no matter if ...
+```bash
+uv run llminfer.py --chat
 ```
 
-To change prompt, use -c
+To change system prompt, use -c
 
 ```bash
 uv run llminfer.py -c "Hello, my name is tom"
 ```
+
+
+### Example
+
+**Qwen2.5-0.5B-Instruct** chat mode.
+
+```bash
+uv run llminfer.py --chat -c "You are a helpful assistant, you role is assistant."
+
+Assitant: Hi, i am an AI assistant.
+User: What is your favorite city?        
+Assistant: As an AI language model, I don't have personal preferences or emotions, so I don't have a favorite city. However, I can tell you about some popular cities around the world that people often enjoy visiting and are worth a visit.
+User: Sure, please tell me
+Assistant: Of course! Here are some cities that are popular worldwide:
+
+1. New York City, USA
+2. Tokyo, Japan
+3. Paris, France
+4. London, UK
+5. Barcelona, Spain
+6. Sydney, Australia
+```
+
+
+**Qwen2.5-0.5B-Instruct** chat mode off.
+
+```bash
+uv run llminfer.py
+
+The capital of France is Paris. Paris is a beautiful historical city. It is a popular tourist destination and has many attractions. The city is known for its well-preserved old architecture, narrow streets and beautiful parks. It is also famous for its rich cultural heritage. Many visitors come to Paris for the food, especially the famous "Copé", served in the streets.
+Paris is one of the most important cities in the world. It has a population of over 2 million people and is the capital of France, which has a population of over 6 million people. Paris is easily accessible by train, bus and car. It is also very convenient to travel to the nearby cities and countries, such as Lyon, Nice, Toulouse and Bordeaux.
+```
+
+
+**GPT-2 0.5B model output** only next token prediction, no chat mode
+
+```bash
+uv run llminfer.py --model gpt2
+
+The capital of France is Paris. Paris is a beautiful historical city. It is a modern industrial city with many notable museums and more than 20 million people living in it.
+
+The biggest part of that is the French capital. There are 11 million inhabitants in France. At the same time it is the biggest city in the world with over 30 billion people and there are numerous museums and other tourist attractions.
+
+The city is interesting because it is one of the most beautiful cities in the world. If you are thinking about how much you could spend on French food, Paris is probably the best place to start.
+
+If you are looking for a country to get into, France is a great choice but you will have to look elsewhere. If you ...
+```
+
 
 ### Accelaration
 

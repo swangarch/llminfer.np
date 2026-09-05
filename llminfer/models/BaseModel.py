@@ -20,5 +20,5 @@ class BaseModel(ABC):
     @staticmethod
     @abstractmethod
     def inference(context: str, weights: np.array, config: dict, tokens: dict,
-                kv_cache_enabled: bool = False, max_len: int = 150) -> None:
+                kv_cache_enabled: bool = False, max_len: int = 350, chat: bool = False) -> None:
         raise NotImplementedError

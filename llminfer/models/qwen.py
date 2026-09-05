@@ -8,6 +8,7 @@ from .ModelRegistry import ModelRegistry
 @ModelRegistry.register
 class Qwen(BaseModel):
     name: str = "qwen2.5"
+    chat_supported: bool = True
 
     @classmethod
     def get_name(cls) -> str:
@@ -71,8 +72,8 @@ class Qwen(BaseModel):
         return next_id
 
     @staticmethod
-    def inference(context: str, weights: np.array, config: dict, tokens: dict,
-                kv_cache_enabled: bool = False, max_len: int = 150) -> None:
+    def inference_no_chat(context: str, weights: np.array, config: dict, tokens: dict,
+                kv_cache_enabled: bool = False, max_len: int = 350) -> None:
         print(context, end="", flush=True)
         
         ids = tokens.encode(context).ids
@@ -86,3 +87,62 @@ class Qwen(BaseModel):
             ids.append(next_token)
             text = tokens.decode([next_token])
             print(text, end="", flush=True)
+
+    @staticmethod
+    def inference_chat(context: str, weights: np.array, config: dict, tokens: dict,
+                kv_cache_enabled: bool = False, max_len: int = 350) -> None:
+
+        context = f"<|im_start|>system\n{context}<|im_end|>"
+        print("Assitant: Hi, i am an AI assistant.", flush=True)
+
+        user_input = input("User: ")
+        context += f"<|im_start|>user\n{user_input}<|im_end|><|im_start|>assitant\n"
+        print("Assistant: ", end="")
+        chat_buffer = ""
+        
+        ids = tokens.encode(context).ids
+
+        while len(ids) < max_len:
+            if max_len > 0 and len(ids) > max_len:
+                break
+            next_token = Qwen.pred_next_token(ids, weights, config)
+
+            if next_token == 151644: #<|im_start|>
+                ids.append(next_token)
+                chat_buffer = ""
+                print(f"Assistant: ", end="")
+                continue
+
+            elif next_token == 151645: #<|im_end|>
+                ids.append(next_token)
+                print()
+
+                user_input = input("User: ")
+                user_input_text = f"<|im_start|>user\n{user_input}<|im_end|>"
+                user_input_ids = tokens.encode(f"{user_input_text}<|im_start|>assistant\n").ids
+                ids += user_input_ids
+
+                print("Assistant: ", end="")
+                continue
+
+            elif next_token == config["eos_token_id"]:
+                #handle last chat
+                break
+
+            text = tokens.decode([next_token])
+            chat_buffer += text
+      
+            print(text, end="", flush=True)
+            ids.append(next_token)
+
+
+    def inference(context: str, weights: np.array, config: dict, tokens: dict,
+                kv_cache_enabled: bool = False, max_len: int = 350, chat: bool = False) -> None:
+        if chat:
+            Qwen.inference_chat(context, weights, config, tokens, 
+                                   kv_cache_enabled=kv_cache_enabled, 
+                                   max_len=max_len)
+        else:
+            Qwen.inference_no_chat(context, weights, config, tokens, 
+                                   kv_cache_enabled=kv_cache_enabled, 
+                                   max_len=max_len)

@@ -8,6 +8,7 @@ from .ModelRegistry import ModelRegistry
 @ModelRegistry.register
 class GPT2(BaseModel):
     name: str = "gpt2"
+    chat_supported: bool = False
 
     @classmethod
     def get_name(cls) -> str:
@@ -75,7 +76,12 @@ class GPT2(BaseModel):
 
     @staticmethod
     def inference(context: str, weights: np.array, config: dict, tokens: dict,
-                kv_cache_enabled: bool = False, max_len: int = 150) -> None:
+                kv_cache_enabled: bool = False, max_len: int = 150, chat: bool = False) -> None:
+
+        if chat:
+            print("Chat is not supported for GPT2")
+            print()
+
         print(context, end="", flush=True)
         
         ids = tokens.encode(context).ids
