@@ -13,13 +13,8 @@ def parse_args():
     parser.add_argument("-s", "--seed", type=int, default=422)
     parser.add_argument("-ml", "--max_len", type=int, default=150)
     parser.add_argument("-m", "--model", type=str, default=f"qwen2.5")
-    parser.add_argument("-c", "--context", type=str, default="""The following is a conversation between a User and a helpful Assistant.
-
-    User: What is the capital of France?
-    Assistant: The capital of France is Paris.
-
-    User: Tell me more about France.
-    Assistant:""")
+    parser.add_argument("-ch", "--chat", default=False, action="store_true")
+    parser.add_argument("-c", "--context", type=str, default="""The capital of France is Paris. Paris is a beautiful historical city.""")
 
     args = parser.parse_args()
     return args
@@ -71,7 +66,7 @@ def main():
     np.random.seed(args.seed)
     
     ModelRegistry.get_model(args.model).inference(args.context, weights, config, tokens,
-                     args.kv_cache, args.max_len)
+                     args.kv_cache, args.max_len, args.chat)
 
 
 if __name__ == "__main__":
