@@ -6,19 +6,19 @@ from abc import ABC, abstractmethod
 class BaseModel(ABC):
     name: str
 
+    @abstractmethod
+    def __init__(self, weights: np.array, config: dict, tokens: dict):
+        raise NotImplementedError
+
     @classmethod
     def get_name(cls) -> str:
         return cls.name
 
-    @staticmethod
     @abstractmethod
-    def pred_next_token(ids: list, W: np.array, config: dict, kv_cache: list = [],
-                    prefill: bool = False, kv_cache_enabled: bool = False,
+    def pred_next_token(self, ids: list, prefill: bool = False, kv_cache_enabled: bool = False,
                     temperature: float = 0.8) -> int:
         raise NotImplementedError
 
-    @staticmethod
     @abstractmethod
-    def inference(context: str, weights: np.array, config: dict, tokens: dict,
-                kv_cache_enabled: bool = False, max_len: int = 350, chat: bool = False) -> None:
+    def inference(self, context: str, kv_cache_enabled: bool = False, max_len: int = 350, chat: bool = False) -> None:
         raise NotImplementedError
