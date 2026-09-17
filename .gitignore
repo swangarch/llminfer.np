@@ -17,3 +17,5 @@ model
 .pytest_cache
 
 .venv
+
+*copy*

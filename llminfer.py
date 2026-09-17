@@ -65,8 +65,9 @@ def main():
     print()
     np.random.seed(args.seed)
     
-    ModelRegistry.get_model(args.model).inference(args.context, weights, config, tokens,
-                     args.kv_cache, args.max_len, args.chat)
+    model = ModelRegistry.get_model(args.model)(weights, config, tokens)
+
+    model.inference(args.context, args.kv_cache, args.max_len, args.chat)
 
 
 if __name__ == "__main__":
