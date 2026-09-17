@@ -64,11 +64,14 @@ def main():
     print("=" * 40)
     print()
     np.random.seed(args.seed)
-    
-    model = ModelRegistry.get_model(args.model)(weights, config, tokens)
 
-    model.inference(args.context, args.kv_cache, args.max_len, args.chat)
-
+    try:
+        model = ModelRegistry.get_model(args.model)(weights, config, tokens)
+        model.inference(args.context, args.kv_cache, args.max_len, args.chat)
+    except KeyboardInterrupt:
+        print("\nStopped by user.")
+    except Exception as e:
+        print(f"\nError: {Exception}.")
 
 if __name__ == "__main__":
     main()

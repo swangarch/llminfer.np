@@ -1,6 +1,6 @@
 from .ModelRegistry import ModelRegistry
-from .GPT2 import GPT2
-from .Qwen import Qwen
+from .gpt2 import GPT2
+from .qwen import Qwen
 
 
 __all__ = ["ModelRegistry"]
