@@ -120,7 +120,7 @@ class Qwen(BaseModel):
         print("Assitant: Hi, i am an AI assistant.", flush=True)
 
         user_input = input("User: ")
-        context += f"<|im_start|>user\n{user_input}<|im_end|><|im_start|>assitant\n"
+        context += f"<|im_start|>user\n{user_input}<|im_end|><|im_start|>assistant\n"
         print("Assistant: ", end="")
         chat_buffer = ""
         

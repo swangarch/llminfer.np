@@ -76,7 +76,7 @@ class GPT2(BaseModel):
         return int(next_id)
 
     def inference(self, context: str, kv_cache_enabled: bool = False, max_len: int = 150, chat: bool = False) -> None:
-
+        self.kv_cache.clear()
         if chat:
             print("Chat is not supported for GPT2")
             print()
