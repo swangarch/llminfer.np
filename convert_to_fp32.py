@@ -13,9 +13,7 @@ def main():
         name: tensor.float().contiguous()
         for name, tensor in weights.items()
     }
-
     save_file(weights_fp32, str(dst))
-
     print("Weights has been converted to fp32.")
 
 

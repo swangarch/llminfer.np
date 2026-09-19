@@ -1,4 +1,3 @@
-import numpy as np
 import os
 from safetensors.numpy import load_file
 from tokenizers import Tokenizer
@@ -27,51 +26,25 @@ def check_model_downloaded(model: str) -> bool:
     return True
 
 
-def use_cuda(weights: dict, cuda: bool = False) -> str:
-    if cuda == True:
-        global np
-        try:
-            import cupy as np
-            for k, v in weights.items():
-                weights[k] = np.array(v)
-            print("Using GPU CUDA accelaration.")
-            return "gpu"
-        except ImportError:
-            print("Failed to import Cupy, using Numpy on CPU.")
-    else:
-        print("Using CPU.")
-    return "cpu"
-
-
 def main():
     args = parse_args()
-
     if not check_model_downloaded(args.model):
         return
-
-    config_path = f"model/{args.model}/config.json"
-    tokenizer_path = f"model/{args.model}/tokenizer.json"
-    weights_path = f"model/{args.model}/model.safetensors"
-
-    config = parse_json(config_path)
-    tokens = Tokenizer.from_file(tokenizer_path)
-    weights = load_file(weights_path)
-
-    print("=" * 40)
-    print(f"Model -- {args.model}")
-    device = use_cuda(weights, args.cuda)
-    print("KV cache enabled." if args.kv_cache else "KV cache disabled.")
-    print("=" * 40)
-    print()
-    np.random.seed(args.seed)
+    config = parse_json(f"model/{args.model}/config.json")
+    tokens = Tokenizer.from_file(f"model/{args.model}/tokenizer.json")
+    weights = load_file(f"model/{args.model}/model.safetensors")
 
     try:
         model = ModelRegistry.get_model(args.model)(weights, config, tokens)
+        model.use_cuda(args.cuda)
+        model.print_model()
+        model.set_seed(args.seed)
         model.inference(args.context, args.kv_cache, args.max_len, args.chat)
     except KeyboardInterrupt:
         print("\nStopped by user.")
     except Exception as e:
-        print(f"\nError: {Exception}.")
+        print(f"\nError: {e}.")
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rope(x, theta, start_pos=0):
+def rope(x, theta, start_pos=0, np=np):
     head_dim = x.shape[-1]
     seq_len = x.shape[1]
 
